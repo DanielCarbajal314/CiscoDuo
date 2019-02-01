@@ -1,0 +1,60 @@
+﻿<script src="https://api.duosecurity.com/frame/hosted/Duo-Web-v2.js"></script>
+
+<style>
+    #duo_iframe {
+        width: 100%;
+        min-width: 304px;
+        max-width: 620px;
+        height: 330px;
+        border: none;
+    }
+</style>
+
+<div class="container">
+    <div class="col-md-6">
+        <div class="form-group col-md-12 row">
+            <label>UserName</label>
+            <input type="text" id="UserName" class="form-control" />
+        </div>
+        <div class="form-group col-md-12 row">
+            <button class="btn btn-primary" id="SignInButton">Sign In</button>
+        </div>
+    </div>
+
+    <div class="col-md-12 row">
+        <div class="col-md-8 col-md-offset-2" id="mainContainer">
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $('#SignInButton').click(() => {
+        var userName = $('#UserName').val()
+        notifySignInRequestFrom(userName);
+    });
+
+    var result;
+
+    function notifySignInRequestFrom(userName) {
+        $.post('/api/session/SingIn', {
+            UserName: userName
+        }).then(loginResponse => {
+            $('#mainContainer').append(`<iframe id="duo_iframe"></iframe>`);
+            Duo.init({
+                'host': loginResponse.LoggingUrl,
+                'sig_request': loginResponse.HashKey,
+                'submit_callback': function (response) {
+                    $.post('/api/session/VerifySession', {
+                        UserName: userName,
+                        VerificationHash: response.innerHTML.split('"')[5]
+                    }).then(result => {
+                        console.log(result);
+                    });
+                }
+            });
+        })
+    }
+
+</script>
